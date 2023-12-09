@@ -27,6 +27,8 @@ In this page I replicated without gravity the famous mobile game "Stack Game", w
 
 ## Video
 
+https://github.com/DiegoLibonati/Stack-Game-3D-Page/assets/99032604/da1dd9f9-be4f-4c27-81ff-4c48651187c1
+
 ## Web
 
 [`https://stack-game-3-d-page.vercel.app/`](https://stack-game-3-d-page.vercel.app/)
