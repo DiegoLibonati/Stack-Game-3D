@@ -38,11 +38,6 @@ const sizes = {
   height: window.innerHeight,
 };
 
-// Audio
-
-const noteC = new Audio("./media/noteC.mp3");
-const cut = new Audio("./media/cut.mp3");
-
 // Events
 
 // Event - Start Game
@@ -130,16 +125,6 @@ mainContainer.addEventListener(
         topBlock.position[direction] -= delta / 2;
       } else {
         topBlock.position[direction] += delta / 2;
-      }
-
-      if (topBlock.position[direction] === bottomBlock.position[direction]) {
-        noteC.pause();
-        noteC.currentTime = 0;
-        noteC.play();
-      } else {
-        cut.pause();
-        cut.currentTime = 0.9;
-        cut.play();
       }
 
       cubes.push(nextBlock);
