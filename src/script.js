@@ -44,7 +44,7 @@ const onInit = () => {
 
   // Camera
   const aspect = window.innerWidth / window.innerHeight;
-  const width = 10;
+  const width = 20;
   const height = width / aspect;
 
   camera = new THREE.OrthographicCamera(
@@ -168,8 +168,8 @@ window.addEventListener("click", (e) => {
 
       // End Fall Part
 
-      const newBlockX = direction === "x" ? topBlock.mesh.position.x : -5;
-      const newBlockZ = direction === "z" ? topBlock.mesh.position.z : -5;
+      const newBlockX = direction === "x" ? topBlock.mesh.position.x : -10;
+      const newBlockZ = direction === "z" ? topBlock.mesh.position.z : -10;
 
       const newBlockDirection = direction === "x" ? "z" : "x";
 
