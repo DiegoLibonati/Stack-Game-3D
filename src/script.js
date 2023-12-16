@@ -44,7 +44,7 @@ const onInit = () => {
 
   // Camera
   const aspect = window.innerWidth / window.innerHeight;
-  const width = 20;
+  const width = 15;
   const height = width / aspect;
 
   camera = new THREE.OrthographicCamera(
