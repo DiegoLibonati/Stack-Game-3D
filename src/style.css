@@ -31,6 +31,7 @@ body {
   display: none;
   position: absolute;
   top: 60px;
+  left: 45px;
   font-size: 35px;
   font-weight: 700;
 }

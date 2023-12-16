@@ -1,242 +1,283 @@
 import * as THREE from "three";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import * as dat from "lil-gui";
-import { createBlock } from "./js/createBlock";
-import { onInitGame } from "./js/onInitGame";
-import { disposeBlocks } from "./js/disposeBlocks";
+import * as CANNON from "cannon";
 
-// Falta
-// - Ir Removiendo de cubes cuando hay mucho
-// - Agregar bloqeus que caen cuando se cortan
-
-// Global Variables
+let camera, scene, renderer;
+let world;
 let cubes = [];
-let direction = "x";
+let fallCubes = [];
 let gameStarted = false;
-let scoreGame = 0;
-let goBack = 0;
-let goForward = 0;
+let goFoward = false;
 
-// Debug
-// const gui = new dat.GUI();
+const originalBlockSize = 3;
+const blockHeight = 1;
 
 // Elements
 const canvas = document.querySelector(".webgl");
 const score = document.querySelector(".score");
 const menu = document.querySelector(".menu_container");
-const mainContainer = document.querySelector(".main_container");
 const lastScore = document.querySelector(".menu_container_wrapper h3");
 const btnPlay = document.querySelector(".menu_container_wrapper button");
 
-// Scene
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(`hsl(${5 + cubes.length * 4}, 100%, 50%)`);
+const onInit = () => {
+  // CannonJS
+  world = new CANNON.World();
+  world.gravity.set(0, -10, 0);
+  world.broadphase = new CANNON.NaiveBroadphase();
+  world.solver.iterations = 40;
 
-// Sizes
-const sizes = {
-  width: window.innerWidth,
-  height: window.innerHeight,
+  // Scene
+  scene = new THREE.Scene();
+
+  // Base
+  addBlock(0, 0, originalBlockSize, originalBlockSize);
+
+  // First Block
+  addBlock(-10, 0, originalBlockSize, originalBlockSize, "x");
+
+  // Lights
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+  scene.add(ambientLight);
+
+  const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6);
+  directionalLight.position.set(10, 20, 0);
+  scene.add(directionalLight);
+
+  // Camera
+  const aspect = window.innerWidth / window.innerHeight;
+  const width = 10;
+  const height = width / aspect;
+
+  camera = new THREE.OrthographicCamera(
+    width / -2,
+    width / 2,
+    height / 2,
+    height / -2,
+    1,
+    100
+  );
+
+  camera.position.set(4, 4, 4);
+  camera.lookAt(0, 0, 0);
+
+  // Renderer
+  renderer = new THREE.WebGLRenderer({ antialias: true, canvas: canvas });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.render(scene, camera);
 };
 
 // Events
 
-// Event - Start Game
-btnPlay.addEventListener(
-  "click",
-  () => {
-    if (cubes.length) {
-      disposeBlocks(scene, cubes);
-    }
-
-    cubes = [];
-    scoreGame = 0;
-    goBack = 0;
-    goForward = 0;
-    direction = "x";
-    scene.background = new THREE.Color(
-      `hsl(${5 + cubes.length * 4}, 100%, 50%)`
-    );
-
-    onInitGame(scene, score, menu, cubes);
-    gameStarted = true;
-  },
-  false
-);
-
 // Event - Resize Window
 window.addEventListener("resize", () => {
-  // Update sizes
-  sizes.width = window.innerWidth;
-  sizes.height = window.innerHeight;
-
   // Update camera
-  camera.aspect = sizes.width / sizes.height;
+  camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
 
   // Update renderer
-  renderer.setSize(sizes.width, sizes.height);
+  renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 });
 
-// Event - Click on Canvas
-mainContainer.addEventListener(
-  "click",
-  (e) => {
-    if (e.target.id === "mainContainer") {
-      let delta, newScale;
-      goBack = 0;
-      goForward = 0;
-      const topBlock = cubes[cubes.length - 1];
-      const bottomBlock = cubes[cubes.length - 2];
+// Event - Start Game
+btnPlay.addEventListener("click", () => {
+  if (!gameStarted) {
+    if (cubes.length > 0 || fallCubes.length > 0) {
+      const arrays = cubes.concat(fallCubes);
 
-      scene.background = new THREE.Color(
-        `hsl(${2 + cubes.length * 1}, 100%, 50%)`
-      );
-
-      for (const cube of cubes) {
-        cube.position.y -= 2;
+      for (const cube of arrays) {
+        cube.mesh.geometry.dispose();
+        cube.mesh.material.dispose();
+        scene.remove(cube);
       }
 
-      const nextBlock = createBlock(
-        10,
-        2,
-        10,
-        new THREE.Color(`hsl(${30 + cubes.length * 4}, 100%, 50%)`)
-      );
-      nextBlock.position.y = 2 + topBlock.position.y;
+      cubes = [];
+      fallCubes = [];
+      goFoward = false;
 
-      delta = Math.abs(
-        bottomBlock.position[direction] - topBlock.position[direction]
-      );
-
-      if (delta > bottomBlock.scale[direction] * 10) {
-        score.style.display = "none";
-        menu.style.display = "flex";
-        score.innerHTML = `0`;
-        lastScore.innerHTML = `Last Score: ${scoreGame}`;
-        gameStarted = false;
-        return;
-      }
-
-      newScale = topBlock.scale[direction] - delta / 10;
-      topBlock.scale[direction] = newScale;
-
-      if (topBlock.position[direction] > bottomBlock.position[direction]) {
-        topBlock.position[direction] -= delta / 2;
-      } else {
-        topBlock.position[direction] += delta / 2;
-      }
-
-      cubes.push(nextBlock);
-
-      if (direction === "x") {
-        nextBlock.position.set(topBlock.position.x, nextBlock.position.y, -20);
-        nextBlock.scale.set(newScale, 1, topBlock.scale.z);
-        direction = "z";
-      } else {
-        nextBlock.position.set(-20, nextBlock.position.y, topBlock.position.z);
-        nextBlock.scale.set(topBlock.scale.x, 1, newScale);
-        direction = "x";
-      }
-
-      scene.add(nextBlock);
-
-      scoreGame += 1;
-      score.innerHTML = `${scoreGame}`;
+      onInit();
     }
-  },
-  false
-);
 
-// First Mesh Decoration
-const base = createBlock(
-  10,
-  10,
-  10,
-  new THREE.Color(`hsl(${30 + cubes.length * 4}, 100%, 50%)`)
-);
-cubes.push(base);
-base.position.y = -10;
-scene.add(base);
+    score.style.display = "block";
+    score.style.color = "#fff";
 
-// Lights
-const ambientLight = new THREE.AmbientLight("#000", 1);
-scene.add(ambientLight);
+    menu.style.display = "none";
 
-const pointLight = new THREE.PointLight("#fff", 1, 100);
-pointLight.position.set(25, -15, 20);
-scene.add(pointLight);
+    renderer.setAnimationLoop(tick);
+    gameStarted = true;
 
-const sphereSize = 1;
-const pointLightHelper = new THREE.PointLightHelper(pointLight, sphereSize);
-scene.add(pointLightHelper);
-
-const hemisphereLight = new THREE.HemisphereLight("#5a7974", "#000", 2);
-scene.add(hemisphereLight);
-
-// Camera
-const camera = new THREE.PerspectiveCamera(
-  45,
-  sizes.width / sizes.height,
-  1,
-  400
-);
-camera.position.z = 30;
-camera.position.y = 30;
-camera.position.x = 30;
-
-scene.add(camera);
-
-// Render
-const renderer = new THREE.WebGLRenderer({
-  canvas: canvas,
+    return;
+  }
 });
 
-// Controls
-const controls = new OrbitControls(camera, canvas);
-controls.enableDamping = true;
+// Event click on Window
+window.addEventListener("click", (e) => {
+  const id = e.target.id;
 
-// Render
-renderer.setSize(sizes.width, sizes.height);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  if (gameStarted && id !== "playbtn") {
+    const topBlock = cubes[cubes.length - 1];
+    const bottomBlock = cubes[cubes.length - 2];
 
-renderer.render(scene, camera);
+    const direction = topBlock.direction;
 
-const tick = () => {
-  let topBlock, bottomBlock, delta;
-  if (cubes.length > 1) {
-    topBlock = cubes[cubes.length - 1];
-    bottomBlock = cubes[cubes.length - 2];
-    delta = Math.abs(
-      bottomBlock.position[direction] - topBlock.position[direction]
-    );
-  }
+    const delta =
+      topBlock.mesh.position[direction] - bottomBlock.mesh.position[direction];
 
-  if (cubes.length > 20) {
-    disposeBlocks(scene, cubes.slice(0, 3));
-    cubes = cubes.slice(3, cubes.length);
-  }
+    const absDelta = Math.abs(delta);
 
-  if (gameStarted) {
-    if (goForward < 350 && (goBack === 0 || goBack === 350)) {
-      goForward++;
-      goBack = 0;
-      cubes[cubes.length - 1].position[direction] += 0.1;
-    } else if (goBack < 350 && (goForward === 0 || goForward === 350)) {
-      goForward = 0;
-      goBack++;
-      cubes[cubes.length - 1].position[direction] -= 0.1;
+    const size = direction === "x" ? topBlock.width : topBlock.depth;
+
+    const overlap = size - absDelta;
+
+    if (overlap > 0) {
+      goFoward = false;
+      score.innerHTML = `${Number(score.innerHTML) + 1}`;
+
+      const newBlockWidth = direction === "x" ? overlap : topBlock.width;
+      const newBlockDepth = direction === "z" ? overlap : topBlock.depth;
+
+      topBlock.width = newBlockWidth;
+      topBlock.depth = newBlockDepth;
+
+      topBlock.mesh.scale[direction] = overlap / size;
+      topBlock.mesh.position[direction] -= delta / 2;
+      topBlock.body.position[direction] -= delta / 2;
+
+      const shape = new CANNON.Box(
+        new CANNON.Vec3(newBlockWidth / 2, blockHeight / 2, newBlockDepth / 2)
+      );
+
+      topBlock.body.shapes = [];
+      topBlock.body.addShape(shape);
+
+      // Fall Part
+
+      const fallBlock = (overlap / 2 + absDelta / 2) * Math.sign(delta);
+      const fallBlockX =
+        direction === "x"
+          ? topBlock.mesh.position.x + fallBlock
+          : topBlock.mesh.position.x;
+      const fallBlockZ =
+        direction === "z"
+          ? topBlock.mesh.position.z + fallBlock
+          : topBlock.mesh.position.z;
+
+      const fallBlockWidth = direction === "x" ? absDelta : newBlockWidth;
+      const fallBlockDepth = direction === "z" ? absDelta : newBlockDepth;
+
+      addFallBlock(fallBlockX, fallBlockZ, fallBlockWidth, fallBlockDepth);
+
+      // End Fall Part
+
+      const newBlockX = direction === "x" ? topBlock.mesh.position.x : -5;
+      const newBlockZ = direction === "z" ? topBlock.mesh.position.z : -5;
+
+      const newBlockDirection = direction === "x" ? "z" : "x";
+
+      addBlock(
+        newBlockX,
+        newBlockZ,
+        newBlockWidth,
+        newBlockDepth,
+        newBlockDirection
+      );
+
+      return;
     }
+
+    renderer.setAnimationLoop(null);
+    lastScore.innerHTML = `Last Score: ${score.innerHTML}`;
+    score.innerHTML = "0";
+    score.style.display = "none";
+    menu.style.display = "flex";
+
+    gameStarted = false;
   }
+});
 
-  // Update controls
-  controls.update();
+// Fns
 
-  //Render
-  renderer.render(scene, camera);
+const addBlock = (x, z, width, depth, direction) => {
+  const y = blockHeight * cubes.length;
 
-  // Call tick again on the next frame
-  window.requestAnimationFrame(tick);
+  const block = createBlock(x, y, z, width, depth, false);
+  block.direction = direction;
+
+  cubes.push(block);
 };
 
-tick();
+const addFallBlock = (x, z, width, depth) => {
+  const y = blockHeight * (cubes.length - 1);
+  const fallBlock = createBlock(x, y, z, width, depth, true);
+  fallCubes.push(fallBlock);
+};
+
+const createBlock = (x, y, z, width, depth, isBlockFall) => {
+  // Cube
+  const geometry = new THREE.BoxGeometry(width, blockHeight, depth);
+
+  const color = new THREE.Color(`hsl(${30 + cubes.length * 4}, 100%, 50%)`);
+  const material = new THREE.MeshLambertMaterial({ color: color });
+
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.position.set(x, y, z);
+  scene.add(mesh);
+
+  // Gravity with Cannon
+  const shape = new CANNON.Box(
+    new CANNON.Vec3(width / 2, blockHeight / 2, depth / 2)
+  );
+  let mass = isBlockFall ? 5 : 0;
+  const body = new CANNON.Body({ mass: mass, shape: shape });
+  body.position.set(x, y, z);
+  world.addBody(body);
+
+  return {
+    mesh,
+    body,
+    width,
+    depth,
+  };
+};
+
+const updatePhysics = () => {
+  world.step(1 / 60);
+
+  fallCubes.forEach((cube) => {
+    cube.mesh.position.copy(cube.body.position);
+    cube.mesh.quaternion.copy(cube.body.quaternion);
+  });
+};
+
+const tick = () => {
+  const speed = 0.039;
+
+  const topBlock = cubes[cubes.length - 1];
+  const bottomBlock = cubes[cubes.length - 2];
+
+  const direction = topBlock.direction;
+
+  const delta = Math.round(
+    topBlock.mesh.position[direction] - bottomBlock.mesh.position[direction]
+  );
+
+  if (delta === 5 || goFoward) {
+    topBlock.mesh.position[topBlock.direction] -= speed;
+    topBlock.body.position[topBlock.direction] -= speed;
+    goFoward = true;
+  }
+
+  if (delta === -5 || delta === -10 || !goFoward) {
+    topBlock.mesh.position[topBlock.direction] += speed;
+    topBlock.body.position[topBlock.direction] += speed;
+    goFoward = false;
+  }
+
+  if (camera.position.y < blockHeight * (cubes.length - 2) + 4) {
+    camera.position.y += speed;
+  }
+
+  updatePhysics();
+  renderer.render(scene, camera);
+};
+
+onInit();
