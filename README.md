@@ -27,7 +27,7 @@ In this page I replicated without gravity the famous mobile game "Stack Game", w
 
 ## Video
 
-https://github.com/DiegoLibonati/Stack-Game-3D-Page/assets/99032604/da1dd9f9-be4f-4c27-81ff-4c48651187c1
+https://github.com/DiegoLibonati/Stack-Game-3D-Page/assets/99032604/67e0b504-95d5-4370-b9be-620787a8e2d7
 
 ## Web
 
