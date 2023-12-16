@@ -56,7 +56,7 @@ body {
 }
 
 .menu_container_wrapper h2 {
-  font-size: 50px;
+  font-size: 40px;
   color: #fafafa;
   text-align: center;
 }
@@ -70,9 +70,10 @@ body {
 .menu_container_wrapper button {
   padding: 10px;
   border-radius: 10px;
-  font-size: 25px;
+  font-size: 15px;
   border: none;
   background-color: #09f;
   color: #fff;
   cursor: pointer;
+  margin-top: 5px;
 }
