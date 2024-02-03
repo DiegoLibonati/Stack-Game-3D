@@ -1,16 +1,19 @@
 {
-  "name": "visualizador-de-objectos-3d",
+  "name": "stack-game-3d-page",
   "private": true,
-  "version": "0.0.0",
+  "version": "2.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build"
   },
   "devDependencies": {
+    "typescript": "^5.3.3",
     "vite": "^4.0.4"
   },
   "dependencies": {
+    "@types/cannon": "^0.1.12",
+    "@types/three": "^0.161.2",
     "cannon": "^0.6.2",
     "three": "^0.148.0"
   }

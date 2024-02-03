@@ -1,24 +1,31 @@
 import * as THREE from "three";
 import * as CANNON from "cannon";
+import { Block, CreateBlock } from "./entities";
 
-let camera, scene, renderer;
-let world;
-let cubes = [];
-let fallCubes = [];
-let gameStarted = false;
-let goFoward = false;
+let camera: THREE.OrthographicCamera,
+  scene: THREE.Scene,
+  renderer: THREE.WebGLRenderer;
+let world: CANNON.World;
+let cubes: Block[] = [];
+let fallCubes: Block[] = [];
+let gameStarted: Boolean = false;
+let goFoward: Boolean = false;
 
-const originalBlockSize = 3;
-const blockHeight = 1;
+const originalBlockSize: number = 3;
+const blockHeight: number = 1;
 
 // Elements
-const canvas = document.querySelector(".webgl");
-const score = document.querySelector(".score");
-const menu = document.querySelector(".menu_container");
-const lastScore = document.querySelector(".menu_container_wrapper h3");
-const btnPlay = document.querySelector(".menu_container_wrapper button");
+const canvas = document.querySelector(".webgl") as HTMLCanvasElement;
+const score = document.querySelector(".score") as HTMLParagraphElement;
+const menu = document.querySelector(".menu_container") as HTMLElement;
+const lastScore = document.querySelector(
+  ".menu_container_wrapper h3"
+) as HTMLHeadingElement;
+const btnPlay = document.querySelector(
+  ".menu_container_wrapper button"
+) as HTMLButtonElement;
 
-const onInit = () => {
+const onInit = (): void => {
   // CannonJS
   world = new CANNON.World();
   world.gravity.set(0, -10, 0);
@@ -29,7 +36,7 @@ const onInit = () => {
   scene = new THREE.Scene();
 
   // Base
-  addBlock(0, 0, originalBlockSize, originalBlockSize);
+  addBlock(0, 0, originalBlockSize, originalBlockSize, "z");
 
   // First Block
   addBlock(-10, 0, originalBlockSize, originalBlockSize, "x");
@@ -70,7 +77,7 @@ const onInit = () => {
 // Event - Resize Window
 window.addEventListener("resize", () => {
   // Update camera
-  camera.aspect = window.innerWidth / window.innerHeight;
+  //camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
 
   // Update renderer
@@ -87,7 +94,7 @@ btnPlay.addEventListener("click", () => {
       for (const cube of arrays) {
         cube.mesh.geometry.dispose();
         cube.mesh.material.dispose();
-        scene.remove(cube);
+        scene.remove(cube.mesh);
       }
 
       cubes = [];
@@ -111,7 +118,8 @@ btnPlay.addEventListener("click", () => {
 
 // Event click on Window
 window.addEventListener("click", (e) => {
-  const id = e.target.id;
+  const target = e.target as HTMLElement;
+  const id = target.id;
 
   if (gameStarted && id !== "playbtn") {
     const topBlock = cubes[cubes.length - 1];
@@ -196,22 +204,41 @@ window.addEventListener("click", (e) => {
 
 // Fns
 
-const addBlock = (x, z, width, depth, direction) => {
+const addBlock = (
+  x: number,
+  z: number,
+  width: number,
+  depth: number,
+  direction: "x" | "y" | "z"
+): void => {
   const y = blockHeight * cubes.length;
 
   const block = createBlock(x, y, z, width, depth, false);
+
   block.direction = direction;
 
-  cubes.push(block);
+  cubes.push(block as Block);
 };
 
-const addFallBlock = (x, z, width, depth) => {
+const addFallBlock = (
+  x: number,
+  z: number,
+  width: number,
+  depth: number
+): void => {
   const y = blockHeight * (cubes.length - 1);
   const fallBlock = createBlock(x, y, z, width, depth, true);
-  fallCubes.push(fallBlock);
+  fallCubes.push(fallBlock as Block);
 };
 
-const createBlock = (x, y, z, width, depth, isBlockFall) => {
+const createBlock = (
+  x: number,
+  y: number,
+  z: number,
+  width: number,
+  depth: number,
+  isBlockFall: boolean
+): CreateBlock => {
   // Cube
   const geometry = new THREE.BoxGeometry(width, blockHeight, depth);
 
@@ -239,7 +266,7 @@ const createBlock = (x, y, z, width, depth, isBlockFall) => {
   };
 };
 
-const updatePhysics = () => {
+const updatePhysics = (): void => {
   world.step(1 / 60);
 
   fallCubes.forEach((cube) => {
@@ -248,7 +275,7 @@ const updatePhysics = () => {
   });
 };
 
-const tick = () => {
+const tick = (): void => {
   const speed = 0.039;
 
   const topBlock = cubes[cubes.length - 1];

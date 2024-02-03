@@ -13,7 +13,7 @@ In this page I replicated without gravity the famous mobile game "Stack Game", w
 
 ## Technologies used
 
-1. Javascript
+1. Typescript
 2. CSS3
 3. NodeJS
 
