@@ -1,4 +1,4 @@
-# Stack-Game-3D-Page
+# Stack Game 3D
 
 ## Getting Started
 
@@ -23,7 +23,7 @@ In this page I replicated without gravity the famous mobile game "Stack Game", w
 
 ## Portfolio Link
 
-[`https://www.diegolibonati.com.ar/#/project/94`](https://www.diegolibonati.com.ar/#/project/94)
+[`https://www.diegolibonati.com.ar/#/project/Stack-Game-3D`](https://www.diegolibonati.com.ar/#/project/Stack-Game-3D)
 
 ## Video
 
